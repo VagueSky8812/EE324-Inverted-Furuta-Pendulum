@@ -1,0 +1,87 @@
+Kt = 0.02797;%Motor Torque Constant in Nm
+Km = 0.02797;%Motor Back-Electromotive Force Constant in V/(rad/s)
+Rm = 16.6;%3.3;% Motor Armature Resistance in Ohm
+Jm = 0.3e-4;%Motor Shaft Moment of Inertia in Kg*m^2
+
+Mp = 0.027;%Masss of Pendulum Assembly in Kg
+Lp = 0.191;%Total Length of Pendulum in m
+lp = 0.153;%Distance of Pendulum Cm from Pivot in m
+Jp = 1.1e-4;%Pendulum Moment of Inertia about Centre of Mass in Kg*m^2
+
+Marm = 0.028;%Mass of Arm in Kg
+r =  0.0826;%Distance b/w Arm pivot and Pendulum Pivot in m
+Jeq = 1.23e-4;% Equivalent Moment of inertia of Arm about Motor Pivot in Kg*m^2
+
+g =  9.8;%Acceleration due to Gravity in m/s^2
+%**************************************************************************
+%Reduced Variables
+%r, g, Km, Kt, Rm
+Jtot2 = Jp*Jeq + Mp*lp*lp*Jeq + Jp*Mp*r*r;
+Jpend_axis = Jp + Mp*lp*lp;
+Jmot_axis = Jeq + Mp*r*r;
+Mplp = Mp*lp;
+%disp(Mplp);
+%**************************************************************************
+%Matrices
+A = [
+    0       0                       1                           0
+    0       0                       0                           1
+    0   (r*(Mplp^2)*g)/Jtot2    Kt*Km*Jpend_axis/(Jtot2*Rm)     0
+    0   Mplp*g*Jmot_axis/Jtot2    -r*Mplp*Kt*Km/(Jtot2*Rm)      0
+    ];
+
+B = [
+    0
+    0
+    Kt*Jpend_axis/(Jtot2*Rm)
+    r*Mplp*Kt/(Jtot2*Rm)
+    ];
+
+A_lqr = [
+    0       1                           0                           0
+    0   Kt*Km*Jpend_axis/(Jtot2*Rm)     (r*(Mplp^2)*g)/Jtot2        0
+    0   0                               0                           1
+    0   -r*Mplp*Kt*Km/(Jtot2*Rm)    Mplp*g*Jmot_axis/Jtot2          0
+    ];
+
+B_lqr = [
+        0
+        Kt*Jpend_axis/(Jtot2*Rm)
+        0
+        r*Mplp*Kt/(Jtot2*Rm)
+        ];
+
+C = [
+    1 0 0 0
+    0 1 0 0
+    0 0 1 0
+    0 0 0 1
+    ];
+
+D = [
+    0
+    0
+    0
+    0
+    ];
+
+disp(A);
+disp(B);
+disp(A_lqr);
+disp(B_lqr);
+disp(C);
+disp(D);
+%**************************************************************************
+Q = [
+    3.648   0   0   0
+    0   32.828   0   0
+    0   0   364.756   0
+    0   0   0   3282.806
+    ];
+R = [100];
+%**************************************************************************
+[K, S, P] = lqr(A_lqr, B_lqr, Q, R);
+disp(K);
+%**************************************************************************
+system1 = ss(A_lqr - B_lqr*K, B_lqr, C, D);
+step(system1);

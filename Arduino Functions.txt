@@ -1,0 +1,2 @@
+setZeroSPI(ENC_0);
+setZeroSPI(ENC_1);
